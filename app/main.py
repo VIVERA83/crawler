@@ -4,10 +4,13 @@
 import asyncio
 import logging
 
-from core.crawler import Crawler
+from app.core.crawler import Crawler
 
 logging.basicConfig(level=logging.INFO)
 result = []
+rules = [["tbody", "a", {"href", "title"}], ["div", "a", {"download", "href"}]]  # noqa
+URL = "https://gitea.radium.group/radium/project-configuration/"
+
 rules = [["tbody", "a", {"href", "title"}], ["div", "a", {"download", "href"}]]  # noqa
 URL = "https://gitea.radium.group/radium/project-configuration/"
 

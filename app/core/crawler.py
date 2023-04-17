@@ -10,13 +10,20 @@ from typing import Optional, Union
 
 from aiohttp import ClientConnectorError, ClientSession
 
-from .utils import URL, download_file, get_hash_sha256, get_links
+from app.core.utils import URL, download_file, get_hash_sha256, get_links
 
 
 class Crawler:  # pylint: disable= R0902
     """
-    Краулер, занимает обкачкой сайта по полученным провалам.
+    Краулер, занимает обкачкой сайта по полученным правилам.
     Правела передаваться в виде списка rules.
+    Пример:
+    roles = [["tbody", "a", {"href", "title"}], ["div", "a", {"download", "href"}]]
+    Имеется два правела, по которым выбирается ссылка для дальнейшего посещения
+        1. ["tbody",  # Тег в котором будем искать.
+            "a", # Искомый тег
+            {"href", "title"}] # описание параметров которые должны быть у тега,
+
     """
     links: Optional[Queue[str]] = None
     pages: Optional[Queue[str]] = None
@@ -31,7 +38,7 @@ class Crawler:  # pylint: disable= R0902
     def __init__(
         self,
         url: str,
-        rules: list[list[str, str, set[str]]], #
+        rules: list[list[str, str, set[str]]],  #
         count_worker: int = 3,
         count_requests=40,
     ):

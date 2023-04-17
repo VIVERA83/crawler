@@ -10,10 +10,11 @@ use_parentheses = true
 python = "^3.9"
 
 [tool.pytest.ini_options]
-testpaths = ["tests", ]
+testpaths = ["tests",]
 python_files = "test*.py"
 addopts = "-rsxX -l --tb=short --strict-markers --doctest-modules"
 xfail_strict = "true"
+asyncio_mode = "auto"
 
 [tool.poetry.group.dev.dependencies]
 wemake-python-styleguide = "^0.17.0"

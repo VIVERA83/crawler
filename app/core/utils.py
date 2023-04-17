@@ -12,8 +12,8 @@ import aiofiles  # pylint: disable= E0401
 from aiohttp import ClientResponse
 from bs4 import BeautifulSoup, Tag  # pylint: disable= E0401
 
-from .data_classes import LinkA
-from .schema import LinkASchema
+from app.core.data_classes import LinkA
+from app.core.schema import LinkASchema
 
 
 class URL:
@@ -31,6 +31,7 @@ class URL:
         :param path: Часть url адреса, путь.
         :return:
         """
+
         return self._url.scheme + "://" + self._url.netloc + path
 
     @property
@@ -47,7 +48,9 @@ class URL:
         Возвращает часть url адреса. Путь и параметры.
         :return:
         """
-        return self._url.path + "?" + self._url.query
+        if self._url.query:
+            return self._url.path + "?" + self._url.query
+        return self._url.path
 
 
 async def get_hash_sha256(path_to_file: str) -> str:
@@ -80,7 +83,7 @@ def check_attrs(tag: Tag, tag_name: str, attrs: set[str]) -> Optional[Tag]:
 
 def get_links(
     content: str, search_location: str, teg_name: str, attrs: set[str]
-) -> list[LinkA]:
+) -> set[LinkA]:
     """
     Возвращает список Link тега а, которые находятся в search_location.
     :param content: Html текст в котором производится поиск.
@@ -94,7 +97,7 @@ def get_links(
     for tag in soup.find_all(search_location):
         for child in tag.find_all(lambda t: check_attrs(t, teg_name, attrs)):
             links.add(LinkASchema().load(child.attrs))
-    return list(links)
+    return links
 
 
 def create_folder(download_folder: str, path: str) -> str:
@@ -104,8 +107,7 @@ def create_folder(download_folder: str, path: str) -> str:
     :param path: Файл, либо путь внутри папки для сохранения
     :return:
     """
-    lst = [download_folder, *path.split("/")]
-    download_path = os.path.join(*lst[:-1])
+    download_path = os.path.join(download_folder, *path.split("/")[:-1])
     if not os.path.exists(download_path):
         os.makedirs(download_path)
     return os.path.join(download_path, path.split("/")[-1])
@@ -113,17 +115,17 @@ def create_folder(download_folder: str, path: str) -> str:
 
 async def download_file(
     resp: ClientResponse,
-    link: str,
+    path: str,
     download_folder: str,
     mode: str = "wb",
     logger: logging.Logger = None,
 ) -> str:
     """
     Сохраняет файл в указанной папке для сохранения,
-    при удачном сохранении возвращает True
+    при удачном сохранении возвращает путь к файлу
     :param resp: Response,
     в котором content-type = "application/zip"
-    :param link: uri ссылка к файлу,
+    :param path: путь ссылка к файлу,
      по которой будет создаваться дерево каталогов
      для сохранения конечного файла
     :param download_folder: корневая папка в которой сохраняется файл
@@ -133,7 +135,7 @@ async def download_file(
     :return:
     """
     logger = logger or logging.getLogger()
-    download_path = create_folder(download_folder, link)
+    download_path = create_folder(download_folder, path)
     try:
         async with resp:
             data = await resp.read()

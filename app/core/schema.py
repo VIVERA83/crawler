@@ -4,7 +4,7 @@
 from marshmallow import EXCLUDE, Schema, fields, post_load
 from marshmallow_meta import meta  # pylint: disable= E0401
 
-from .data_classes import LinkA
+from app.core.data_classes import LinkA
 
 
 @meta(unknown=EXCLUDE)
@@ -15,7 +15,7 @@ class LinkASchema(Schema):
     """
 
     href = fields.Str()
-    title = fields.Str(missing="title")
+    title = fields.Str(load_default="title")
 
     @post_load
     def make_object(self, data: dict, **_: dict) -> LinkA:
