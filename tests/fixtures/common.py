@@ -37,6 +37,13 @@ def file_page(base_path):
 
 
 @pytest.fixture
+def file_page_2(base_path):
+    if base_path.split('/')[-1] == "tests":
+        return os.path.join(base_path, "data/git_s.html")
+    return os.path.join(base_path, "tests/data/git_s.html")
+
+
+@pytest.fixture
 def download_folder(base_path):
     if base_path.split('/')[-1] == "tests":
         return os.path.join(base_path, "download")
@@ -46,6 +53,12 @@ def download_folder(base_path):
 @pytest.fixture
 async def page(file_page) -> str:
     async with aiofiles.open(file_page, "r") as file:
+        return await file.read()
+
+
+@pytest.fixture
+async def page_2(file_page_2) -> str:
+    async with aiofiles.open(file_page_2, "r") as file:
         return await file.read()
 
 
