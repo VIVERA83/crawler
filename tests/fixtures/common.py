@@ -1,9 +1,10 @@
 import os
 import shutil
 
+import aiofiles
 import pytest
 
-from tests.data.data import content, control_value
+from tests.data.data import control_value
 
 
 @pytest.fixture
@@ -32,19 +33,20 @@ def file_test(base_path):
 def file_page(base_path):
     if base_path.split('/')[-1] == "tests":
         return os.path.join(base_path, "data/test.html")
-    return os.path.join(base_path, "tests/data/master.zip")
+    return os.path.join(base_path, "tests/data/test.html")
 
 
 @pytest.fixture
 def download_folder(base_path):
     if base_path.split('/')[-1] == "tests":
-        return os.path.join(base_path, "download/test")
-    return os.path.join(base_path, "tests/download/test")
+        return os.path.join(base_path, "download")
+    return os.path.join(base_path, "tests/download")
 
 
 @pytest.fixture
-def page():
-    return content
+async def page(file_page) -> str:
+    async with aiofiles.open(file_page, "r") as file:
+        return await file.read()
 
 
 @pytest.fixture
@@ -59,4 +61,3 @@ def clear(download_folder):
     yield
     if os.path.exists(download_folder):
         shutil.rmtree(download_folder)
-

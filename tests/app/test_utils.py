@@ -1,11 +1,9 @@
 import asyncio
 import hashlib
-import logging
+
 import os
-from asyncio import TimeoutError
 
 import aiofiles
-import pytest
 
 from app.core.utils import URL, get_hash_sha256, get_links, create_folder, download_file
 
@@ -77,14 +75,19 @@ class TestDownloadFile:
     Проверка на скачивание, и корректное сохранение
     """
 
-    async def test_download_file(self, resp, base_path, file_page):
-        filename = await download_file(resp, "download/test_page.html", base_path)
+    async def test_download_binary_file(self, resp, base_path, file_page, download_folder):
+        filename = await download_file(resp, file_page, download_folder)
         async with aiofiles.open(filename, "br") as file:
             async with aiofiles.open(file_page, "br") as f:
                 assert len(await file.read()) == len(await f.read())
 
-    async def test_cancel_download(self, resp_cancel, base_path, file_page):
+    async def test_download_text_file(self, resp_text, base_path, file_page, download_folder):
+        filename = await download_file(resp_text, file_page, download_folder, mode="w")
+        async with aiofiles.open(filename) as file:
+            assert len(await file.read()) == resp_text.len
+
+    async def test_cancel_download(self, resp_cancel, base_path, file_page, download_folder):
         """
         Проверка на корректную работу при прерывании процесса закачки файла
         """
-        assert not await asyncio.wait_for(download_file(resp_cancel, "download/test_page.html", base_path), 1)
+        assert not await asyncio.wait_for(download_file(resp_cancel, "m.zip", base_path), 1)

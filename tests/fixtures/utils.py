@@ -16,14 +16,30 @@ class Resp(ClientResponse):
 
 class RespCancel(Resp):
     async def read(self):
-        await asyncio.sleep(2)
+        await asyncio.sleep(3)
+
+
+class RespText(Resp):
+    text = b"Hello world!"
+
+    async def read(self) -> bytes:
+        return self.text
+
+    @property
+    def len(self):
+        return len(self.text)
 
 
 @pytest.fixture
-def resp(base_path, file_page) -> ClientResponse:
+def resp(base_path, file_page) -> Resp:
     return Resp(file_page)
 
 
 @pytest.fixture
-def resp_cancel(base_path, file_page) -> ClientResponse:
+def resp_cancel(base_path, file_page) -> RespCancel:
     return RespCancel(file_page)
+
+
+@pytest.fixture
+def resp_text(base_path, file_page) -> RespText:
+    return RespText(file_page)
