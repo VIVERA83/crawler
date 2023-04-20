@@ -1,47 +1,69 @@
-"""
-Модуль в котором реализован Краулер,  для  обхода страницы.
-"""
+"""Модуль в котором реализован Краулер,  для  обхода страницы."""
+from __future__ import annotations
+
 import asyncio
 import datetime
 import logging
-from asyncio import CancelledError, Queue, Semaphore, Task, to_thread
+import sys
+from asyncio import CancelledError, Queue, Semaphore, Task
 from http import HTTPStatus
-from typing import Optional, Union
 
 from aiohttp import ClientConnectorError, ClientSession
+from core.data_classes import LinkA
 
 from app.core.utils import URL, download_file, get_hash_sha256, get_links
 
+# для совместимости с более ранними версиями Python3.
+if sys.version_info.minor >= 9:
+    from asyncio import to_thread
+else:
 
-class Crawler:  # pylint: disable= R0902
+    async def to_thread(
+        content: str, search_location: str, teg_name: str, attrs: set[str]
+    ) -> set[LinkA]:
+        """
+        Альтернатива asyncio.to_thread для более ранних версий Python3
+        :param args:
+        :return:
+        """
+        return await asyncio.get_event_loop().run_in_executor(
+            None, get_links, content, search_location, teg_name, attrs
+        )
+
+
+class Crawler:
     """
     Краулер, занимает обкачкой сайта по полученным правилам.
     Правела передаваться в виде списка rules.
     Пример:
-    roles = [["tbody", "a", {"href", "title"}], ["div", "a", {"download", "href"}]]
-    Имеется два правела, по которым выбирается ссылка для дальнейшего посещения
+    roles = [["tbody", "a", {"href", "title"}],
+             ["div", "a", {"download", "href"}]]
+    Имеется два правела, по которым выбирается
+    ссылка для дальнейшего посещения
         1. ["tbody",  # Тег в котором будем искать.
             "a", # Искомый тег
-            {"href", "title"}] # описание параметров которые должны быть у тега,
+            {"href", "title"}] # описание параметров
+            которые должны быть у тега,
 
     """
-    links: Optional[Queue[str]] = None
-    pages: Optional[Queue[str]] = None
+
+    links: Queue[str] | None = None
+    pages: Queue[str] | None = None
     # ограничитель для одновременной работы не более чем указанно в семафоре
-    semaphore: Optional[Semaphore] = None
-    session: Optional[ClientSession] = None
-    counter: Optional[int] = None
-    download_folder: Optional[str] = "downloads"
+    semaphore: Semaphore | None = None
+    session: ClientSession | None = None
+    counter: int | None = None
+    download_folder: str | None = "downloads"
     total_download = 0
-    hash_files: Optional[list[str]] = None
+    hash_files: list[str] | None = None
 
     def __init__(
-        self,
+        self: "Crawler",
         url: str,
         rules: list[list[str, str, set[str]]],  #
         count_worker: int = 3,
-        count_requests=40,
-    ):
+        count_requests: int = 40,
+    ) -> None:
         """
 
         :param url: Страница для обхода
@@ -54,13 +76,13 @@ class Crawler:  # pylint: disable= R0902
         self.visited = set()
         self.errors_links = set()
         self.is_running = False
-        self.workers: Optional[list[Task]] = []
+        self.workers: list[Task] | None = []
         self.count_worker = count_worker
         self.count_request = count_requests
         self.rules = rules
         self.logger.info(" Creating crawler:  %s", self.base_url.get_url)
 
-    async def start(self):
+    async def start(self: "Crawler") -> None:
         """
         Метод отвечает за подготовку для начала обкачки сайта
         :return:
@@ -81,7 +103,7 @@ class Crawler:  # pylint: disable= R0902
         self.workers.append(asyncio.create_task(self.create_links()))
         self.workers.append(asyncio.create_task(self.is_done()))
 
-    async def create_links(self):
+    async def create_links(self: "Crawler") -> None:
         """
         Метод слушает очередь self.pages, в которой лежать страницы сайта,
         Страницы обкачиваются в отдельном потоке. Из них достаются ссылка для
@@ -97,7 +119,7 @@ class Crawler:  # pylint: disable= R0902
                         await self.links.put(link.href)
                         self.counter += 1
 
-    async def stop(self):
+    async def stop(self: "Crawler") -> None:
         """
         Метод отвечает за корректную остановку краулера
         :return:
@@ -111,9 +133,10 @@ class Crawler:  # pylint: disable= R0902
             await self.session.close()
         self.logger.debug(" Crawler stopped")
 
-    async def get_result(self):
+    async def get_result(self: "Crawler") -> list[str]:
         """
-        Запускает краулер на выполнение и возвращает список hash скаченных файлов.
+        Запускает краулер на выполнение и возвращает список hash
+        скаченных файлов.
         1. скаченные файлы помещаются в папку self.download_folder
         2. через лог выводит данные по результатам
         обкачки, начало, окончание и общее время затраченное на обкачку.
@@ -121,25 +144,25 @@ class Crawler:  # pylint: disable= R0902
         """
         await self.start()
         start = datetime.datetime.now()
-        self.logger.info(f" Started crawler:   {start}")  # pylint: disable= W1203
+        self.logger.info(" Started crawler:   %s", start)
         try:
             await asyncio.gather(*self.workers)
         except CancelledError:
             await self.stop()
         stop = datetime.datetime.now()
-        self.logger.info(f" Stopped crawler:   {stop}")  # pylint: disable= W1203
-        self.logger.info(f" Total time works:  {stop - start}")  # pylint: disable= W1203
+        self.logger.info(" Stopped crawler:   %s", stop)
+        self.logger.info(" Total time works:  %s", stop - start)
         if self.errors_links:
-            self.logger.info(f" Total error links: {len(self.errors_links)}")  # pylint: disable= W1203
-        self.logger.info(f" Visited:           {len(self.visited)}")  # pylint: disable= W1203
-        self.logger.info(f" Total:             {self.counter}")  # pylint: disable= W1203
-        self.logger.info(f" Downloaded files:  {self.total_download}")  # pylint: disable= W1203
+            self.logger.info(" Total error links: %s", len(self.errors_links))
+        self.logger.info(" Visited:           %s", len(self.visited))
+        self.logger.info(" Total:             %s", self.counter)
+        self.logger.info(" Downloaded files:  %s", self.total_download)
         return self.hash_files
 
-    async def is_done(self):
+    async def is_done(self: "Crawler") -> None:
         """
-        Проверяет общее количество ссылок и количеством посещенных, если они равны
-        останавливает worker (так как все уже обкачено),
+        Проверяет общее количество ссылок и количеством посещенных,
+        если они равны останавливает worker (так как все уже обкачено),
         в противном случае self.links будут работать вечно.
 
         :return:
@@ -147,10 +170,15 @@ class Crawler:  # pylint: disable= R0902
         while self.is_running:
             await asyncio.sleep(2)
             is_done = str(self.counter == len(self.visited))
-            self.logger.info(  # pylint: disable= W1203
-                f" Checking:          is_done: {is_done:<5}"
-                f" visited: {len(self.visited):<5} total: {self.counter:<5}"
-                f" queue: {self.links.qsize()}"
+            self.logger.info(
+                " Checking:          is_done: "
+                "%s"
+                " visited: %s total: %s"
+                " queue: %s",
+                is_done,
+                self.visited,
+                self.counter,
+                self.links.qsize(),
             )
             if self.counter == len(self.visited):
                 self.logger.debug(
@@ -159,18 +187,20 @@ class Crawler:  # pylint: disable= R0902
                 )
                 await self.stop()
 
-    async def worker(self, name: Union[int, str] = None):
+    async def worker(self: "Crawler", name: int | str = None) -> None:
         """
         Worker, выполняет следующие функции:
         1. Читает из очереди links ссылку и ходит по ссылке
-        2. Если ссылка ведет на файл, скачивает файл и вычитывает hash_sha256
+        2. Если ссылка ведет на файл, скачивает файл
+        и вычитывает hash_sha256
            hash, сохраняет в self.hash_files
-        3. Если ссылка ведет на страницу, скаченную страницу кладет в очередь на парсинг.
+        3. Если ссылка ведет на страницу,
+        скаченную страницу кладет в очередь на парсинг.
         Worker, работает пока self.is_running = True
         :param name: Имя Worker, Необязательный параметр
         :return:
         """
-        self.logger.debug(" Starting worker: %s", name if name else '')
+        self.logger.debug(" Starting worker: %s", name if name else "")
         while self.is_running:
             try:
                 async with self.semaphore:
@@ -184,28 +214,32 @@ class Crawler:  # pylint: disable= R0902
                                     page = await resp.text()
                                     await self.pages.put(page)
                                 elif resp.content_type == "application/zip":
-                                    if download_path := await download_file(
+                                    download_path = await download_file(
                                         resp, link, self.download_folder
-                                    ):
+                                    )
+                                    if download_path:
                                         self.total_download += 1
                                         self.hash_files.append(
                                             await get_hash_sha256(
-                                                download_path)
+                                                path_to_file=download_path
+                                            )
                                         )
                                 elif resp.content_type == "text/plain":
-                                    if download_path := await download_file(
+                                    download_path = await download_file(
                                         resp, link, self.download_folder, "w"
-                                    ):
+                                    )
+                                    if download_path:
                                         self.total_download += 1
                                         self.hash_files.append(
                                             await get_hash_sha256(
-                                                download_path)
+                                                path_to_file=download_path
+                                            )
                                         )
                     except ClientConnectorError as error:
                         self.errors_links.add(link)
-                        self.logger.warning(error)
+                        self.logger.warning("Connection error: %s", link)
 
                     self.visited.add(link)
-                self.logger.debug(" %s : %s", name if name else 'Worker', link)
+                self.logger.debug(" %s : %s", name if name else "Worker", link)
             except CancelledError:
                 self.logger.debug(" %s cancelled", name if name else "Worker")

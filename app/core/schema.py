@@ -2,7 +2,7 @@
 Модуль с Marshmallow схемами используемый для сериализация данных в дата_классы
 """
 from marshmallow import EXCLUDE, Schema, fields, post_load
-from marshmallow_meta import meta  # pylint: disable= E0401
+from marshmallow_meta import meta
 
 from app.core.data_classes import LinkA
 
@@ -18,8 +18,7 @@ class LinkASchema(Schema):
     title = fields.Str(load_default="title")
 
     @post_load
-    def make_object(self, data: dict, **_: dict) -> LinkA:
-        # pylint: disable= R0201
+    def make_object(self: "LinkASchema", any_data: dict, **_: dict) -> LinkA:
         """
         При вызове LinkASchema().load(data) будет
         возвращен одноименный дата класс LinkA
@@ -27,4 +26,4 @@ class LinkASchema(Schema):
         :param _:
         :return:
         """
-        return LinkA(**data)
+        return LinkA(**any_data)

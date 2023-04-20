@@ -1,16 +1,17 @@
 """
 вспомогательные утилиты, для краулера
 """
+from __future__ import annotations
+
 import hashlib
 import logging
 import os
 from asyncio import CancelledError
-from typing import Optional
 from urllib.parse import urlparse
 
-import aiofiles  # pylint: disable= E0401
+import aiofiles
 from aiohttp import ClientResponse
-from bs4 import BeautifulSoup, Tag  # pylint: disable= E0401
+from bs4 import BeautifulSoup, Tag
 
 from app.core.data_classes import LinkA
 from app.core.schema import LinkASchema
@@ -19,10 +20,10 @@ from app.core.schema import LinkASchema
 class URL:
     """Отвечает за формирования url адреса"""
 
-    def __init__(self, url: str):
+    def __init__(self: "URL", url: str) -> None:
         self._url = urlparse(url)
 
-    def create_url(self, path: str) -> str:
+    def create_url(self: "URL", path: str) -> str:
         """
         Создает на основе полученного path url адрес.
         Пример: https - схема
@@ -35,7 +36,7 @@ class URL:
         return self._url.scheme + "://" + self._url.netloc + path
 
     @property
-    def get_url(self) -> str:
+    def get_url(self: "URL") -> str:
         """
         Возвращает базовый url адрес
         :return:
@@ -43,7 +44,7 @@ class URL:
         return self._url.geturl()
 
     @property
-    def get_uri(self) -> str:
+    def get_uri(self: "URL") -> str:
         """
         Возвращает часть url адреса. Путь и параметры.
         :return:
@@ -62,13 +63,13 @@ async def get_hash_sha256(path_to_file: str) -> str:
     hsh = hashlib.sha256()
     async with aiofiles.open(path_to_file, "rb") as file:
         while True:
-            data = await file.read(1024)
-            if not data:
+            data_file = await file.read(1024)
+            if not data_file:
                 return hsh.hexdigest()
-            hsh.update(data)
+            hsh.update(data_file)
 
 
-def check_attrs(tag: Tag, tag_name: str, attrs: set[str]) -> Optional[Tag]:
+def check_attrs(tag: Tag, tag_name: str, attrs: set[str]) -> Tag | None:
     """
     Проверка тега на соответствие требование по названию и атрибутам
     :param tag: Проверяемы тег.
@@ -82,18 +83,18 @@ def check_attrs(tag: Tag, tag_name: str, attrs: set[str]) -> Optional[Tag]:
 
 
 def get_links(
-    content: str, search_location: str, teg_name: str, attrs: set[str]
+    page: str, search_location: str, teg_name: str, attrs: set[str]
 ) -> set[LinkA]:
     """
     Возвращает список Link тега а, которые находятся в search_location.
-    :param content: Html текст в котором производится поиск.
+    :param page: Html текст в котором производится поиск.
     :param search_location: Тег в котором производится поиск.
     :param teg_name: Тег, который ищем.
     :param attrs: Атрибуты тега которые должны быть.
     :return:
     """
     links = set()
-    soup = BeautifulSoup(content, "lxml")
+    soup = BeautifulSoup(page, "lxml")
     for tag in soup.find_all(search_location):
         for child in tag.find_all(lambda t: check_attrs(t, teg_name, attrs)):
             links.add(LinkASchema().load(child.attrs))
@@ -138,16 +139,18 @@ async def download_file(
     download_path = create_folder(download_folder, path)
     try:
         async with resp:
-            data = await resp.read()
-            async with aiofiles.open(file=download_path, mode=mode) as file:  # noqa
+            page = await resp.read()
+            async with aiofiles.open(
+                file=download_path, mode=mode
+            ) as file:  # noqa
                 if mode == "w":
-                    await file.write(data.decode("utf-8"))
+                    await file.write(page.decode("utf-8"))
                 else:
-                    await file.write(data)
-            logger.debug(f" Download file:     {download_path}")
+                    await file.write(page)
+            logger.debug(" Download file:     %s", download_path)
             return download_path
     except CancelledError:
         logger.warning(
-            "The file download aborted, "
-            "the file may be corrupted: %s", download_path
+            "The file download aborted, " "the file may be corrupted: %s",
+            download_path,
         )
