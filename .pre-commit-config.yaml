@@ -37,3 +37,11 @@ repos:
           - flake8-logging-format
           - flake8-spellcheck
           - flake8-isort
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest
+        entry: pytest
+        language: system
+        pass_filenames: false
+        always_run: true

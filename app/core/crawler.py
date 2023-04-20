@@ -9,8 +9,8 @@ from asyncio import CancelledError, Queue, Semaphore, Task
 from http import HTTPStatus
 
 from aiohttp import ClientConnectorError, ClientSession
-from core.data_classes import LinkA
 
+from app.core.data_classes import LinkA
 from app.core.utils import URL, download_file, get_hash_sha256, get_links
 
 # для совместимости с более ранними версиями Python3.

@@ -1,5 +1,5 @@
 # Byte-compiled / optimized / DLL files
-
+.idea/
 .env_local
 temp/
 __pycache__/
@@ -130,3 +130,5 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+poetry.lock
+tests/download/

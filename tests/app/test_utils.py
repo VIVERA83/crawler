@@ -4,7 +4,6 @@ import os
 from typing import List
 
 import aiofiles
-import pytest
 
 from app.core.utils import (
     URL,
@@ -125,7 +124,7 @@ class TestDownloadFile:
         """
         Проверка на корректную работу при прерывании процесса закачки файла
         """
-        with pytest.raises(asyncio.TimeoutError):
-            assert not await asyncio.wait_for(
-                download_file(resp_cancel, "m.zip", base_path), 1
-            )
+
+        assert not await asyncio.wait_for(
+            download_file(resp_cancel, "m.zip", base_path), 1
+        )

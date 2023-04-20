@@ -1,7 +1,6 @@
 import asyncio
 
 import aiofiles
-import pytest
 from aiohttp import ClientResponse
 
 
@@ -33,18 +32,3 @@ class RespText(Resp):
         Размер файла
         """
         return len(self.text)
-
-
-@pytest.fixture()
-def resp(base_path: str, file_page: str) -> Resp:
-    return Resp(file_page)
-
-
-@pytest.fixture()
-def resp_cancel(base_path: str, file_page: str) -> RespCancel:
-    return RespCancel(file_page)
-
-
-@pytest.fixture()
-def resp_text(base_path: str, file_page: str) -> RespText:
-    return RespText(file_page)
