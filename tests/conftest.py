@@ -1,4 +1,5 @@
 import os
+import shutil
 
 import aiofiles
 import pytest
@@ -84,3 +85,16 @@ def url2():
 @pytest.fixture()
 def resp_cancel(base_path: str, file_page: str) -> RespCancel:
     return RespCancel(file_page)
+
+
+@pytest.fixture(
+    autouse=True,
+)
+def clear(download_folder: str) -> None:
+    """Очистка downloads папки"""
+    if os.path.exists(download_folder):
+        shutil.rmtree(download_folder)
+    yield
+    if os.path.exists(download_folder):
+        shutil.rmtree(download_folder)
+    return None

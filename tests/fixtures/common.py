@@ -1,5 +1,4 @@
 import os
-import shutil
 
 import pytest
 
@@ -21,14 +20,3 @@ def file_test(base_path: str):
 @pytest.fixture()
 def control_href_value():
     return control_value
-
-
-@pytest.fixture(autouse=True)
-def _clear(download_folder: str) -> None:
-    """Очистка downloads папки"""
-    if os.path.exists(download_folder):
-        shutil.rmtree(download_folder)
-    yield
-    if os.path.exists(download_folder):
-        shutil.rmtree(download_folder)
-    return

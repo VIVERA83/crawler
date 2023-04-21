@@ -1,6 +1,7 @@
 import asyncio
 import hashlib
 import os
+import shutil
 from typing import List
 
 import aiofiles
@@ -75,6 +76,11 @@ class TestCreateFolder:
         Проверим создание вложенных папок
         """
         new_folder = "test1"
+        assert os.path.join(download_folder, new_folder) == create_folder(
+            download_folder, new_folder
+        )
+        if os.path.exists(download_folder):
+            shutil.rmtree(download_folder)
         assert os.path.join(download_folder, new_folder) == create_folder(
             download_folder, new_folder
         )
