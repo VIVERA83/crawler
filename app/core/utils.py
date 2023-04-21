@@ -144,7 +144,7 @@ async def download_file(
                 file=download_path, mode=mode
             ) as file:  # noqa
                 if mode == "w":
-                    await file.write(page.decode("cp1252"))
+                    await file.write(page.decode("utf-8", errors="ignore"))
                 else:
                     await file.write(page)
             logger.debug(" Download file:     %s", download_path)
