@@ -4,31 +4,12 @@ from __future__ import annotations
 import asyncio
 import datetime
 import logging
-import sys
-from asyncio import CancelledError, Queue, Semaphore, Task
+from asyncio import CancelledError, Queue, Semaphore, Task, to_thread
 from http import HTTPStatus
 
 from aiohttp import ClientConnectorError, ClientSession
 
-from app.core.data_classes import LinkA
 from app.core.utils import URL, download_file, get_hash_sha256, get_links
-
-# для совместимости с более ранними версиями Python3.
-if sys.version_info.minor >= 9:
-    from asyncio import to_thread
-else:
-
-    async def to_thread(
-        content: str, search_location: str, teg_name: str, attrs: set[str]
-    ) -> set[LinkA]:
-        """
-        Альтернатива asyncio.to_thread для более ранних версий Python3
-        :param args:
-        :return:
-        """
-        return await asyncio.get_event_loop().run_in_executor(
-            None, get_links, content, search_location, teg_name, attrs
-        )
 
 
 class Crawler:
@@ -210,6 +191,7 @@ class Crawler:
                             self.base_url.create_url(link)
                         ) as resp:
                             if resp.status == HTTPStatus.OK:
+                                print(resp.content_type)
                                 if resp.content_type == "text/html":
                                     page = await resp.text()
                                     await self.pages.put(page)
@@ -225,6 +207,7 @@ class Crawler:
                                             )
                                         )
                                 elif resp.content_type == "text/plain":
+                                    print("Downloading")
                                     download_path = await download_file(
                                         resp, link, self.download_folder, "w"
                                     )
@@ -235,7 +218,14 @@ class Crawler:
                                                 path_to_file=download_path
                                             )
                                         )
-                    except ClientConnectorError as error:
+                            else:
+                                self.logger.warning(
+                                    "Connection to %s failed, status: %s",
+                                    link,
+                                    resp.status,
+                                )
+                                self.errors_links.add(link)
+                    except ClientConnectorError:
                         self.errors_links.add(link)
                         self.logger.warning("Connection error: %s", link)
 

@@ -1,21 +1,25 @@
-"""
-Модуль запуска приложения
-"""
+"""Модуль запуска приложения"""
 import asyncio
 import logging
 
-from core.crawler import Crawler
+from app.core.crawler import Crawler
+
+logging.basicConfig(level=logging.INFO)
+rules = [
+    ["tbody", "a", {"href", "title"}],
+    ["div", "a", {"download", "href"}],
+]
+url = "https://gitea.radium.group/" "radium/project-configuration/"
+
+
+async def main() -> list[str]:
+    """Функция запуска приложения"""
+    crawler = Crawler(url=url, rules=rules, count_worker=3)
+    return await crawler.get_result()
+
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-
-    rules = [
-        ["tbody", "a", {"href", "title"}],
-        ["div", "a", {"download", "href"}],
-    ]
-    URL = "https://gitea.radium.group/" "radium/project-configuration/"
-    crawler = Crawler(url=URL, rules=rules, count_worker=3)
     try:
-        print(asyncio.run(crawler.get_result(), debug=True), sep="\n")
+        print(asyncio.run(main()))
     except KeyboardInterrupt:
         logging.warning(" KeyboardInterrupt")

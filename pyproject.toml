@@ -19,6 +19,7 @@ pytest-asyncio = "0.21.0"
 pytest-aiohttp = "1.0.4"
 pytest-cov = "4.0.0"
 aioresponses = "0.7.4"
+mock = "^5.0.2"
 
 [tool.poetry.group.dev.dependencies]
 wemake-python-styleguide = "^0.17.0"
@@ -49,6 +50,7 @@ python_files = "test*.py"
 addopts = "-rsxX -l --tb=short --strict-markers --doctest-modules"
 xfail_strict = "true"
 asyncio_mode = "auto"
+
 
 [build-system]
 requires = ["poetry-core"]

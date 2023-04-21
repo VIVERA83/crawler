@@ -32,3 +32,7 @@ class RespText(Resp):
         Размер файла
         """
         return len(self.text)
+
+    @property
+    def content_type(self: "RespText") -> str:
+        return "text/html"
