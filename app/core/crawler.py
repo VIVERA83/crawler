@@ -157,7 +157,7 @@ class Crawler:
                 " visited: %s total: %s"
                 " queue: %s",
                 is_done,
-                self.visited,
+                len(self.visited),
                 self.counter,
                 self.links.qsize(),
             )
@@ -191,7 +191,6 @@ class Crawler:
                             self.base_url.create_url(link)
                         ) as resp:
                             if resp.status == HTTPStatus.OK:
-                                print(resp.content_type)
                                 if resp.content_type == "text/html":
                                     page = await resp.text()
                                     await self.pages.put(page)
@@ -207,7 +206,6 @@ class Crawler:
                                             )
                                         )
                                 elif resp.content_type == "text/plain":
-                                    print("Downloading")
                                     download_path = await download_file(
                                         resp, link, self.download_folder, "w"
                                     )

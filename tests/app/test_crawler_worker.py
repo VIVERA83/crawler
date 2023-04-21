@@ -28,13 +28,12 @@ class TCrawler(Crawler):
 class FakeResponse:
     status = 200
     content_type = "application/json"
+    file_path = ""
 
     def __init__(self: "FakeResponse", url: str):  # noqa
-        print(f"Creating Resp {url}")
-        self.file_path = url
+        self.url = url
 
     async def read(self: "FakeResponse") -> bytes:
-        print("Reading111111111111111")
         async with aiofiles.open(self.file_path, "rb") as file:
             return await file.read()
 
@@ -51,12 +50,33 @@ class FakeResponse:
 
 
 class TestCrawler:
-    async def test_worker(self: "TestCrawler", url1: str):
+    async def test_worker_bad_response(self: "TestCrawler", url1: str):
         rules = [
             ["tbody", "a", {"href", "title"}],
         ]
         crawler = TCrawler(url1, rules)
         FakeResponse.status = 400
         await crawler.get_result()
-        print(crawler.base_url.get_uri)
         assert crawler.base_url.get_uri == crawler.errors_links.pop()
+
+    async def test_worker_download_file(self: "TestCrawler", file_test: str):
+        rules = [["tbody", "a", {"href", "title"}]]
+        url = (
+            "https://github.com/VIVERA83/crawler/archive/refs/heads/master.zip"
+        )
+        print(file_test)
+        crawler = TCrawler(url, rules)
+        FakeResponse.status = 200
+        FakeResponse.content_type = "application/zip"
+        FakeResponse.file_path = file_test
+        assert len(await crawler.get_result()) == 1
+
+    async def test_worker_download_text(self: "TestCrawler", file_page: str):
+        rules = [["tbody", "a", {"href", "title"}]]
+        url = "https://github.com/VIVERA83/crawler/master.html"
+        print(file_page)
+        crawler = TCrawler(url, rules)
+        FakeResponse.status = 200
+        FakeResponse.content_type = "text/plain"
+        FakeResponse.file_path = file_page
+        assert len(await crawler.get_result()) == 1

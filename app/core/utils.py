@@ -140,9 +140,7 @@ async def download_file(
     try:
         async with resp:
             page = await resp.read()
-            async with aiofiles.open(
-                file=download_path, mode=mode
-            ) as file:  # noqa
+            async with aiofiles.open(file=download_path, mode=mode) as file:
                 if mode == "w":
                     await file.write(page.decode("utf-8", errors="ignore"))
                 else:
