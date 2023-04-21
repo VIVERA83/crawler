@@ -64,17 +64,17 @@ class TestCrawler:
         url = (
             "https://github.com/VIVERA83/crawler/archive/refs/heads/master.zip"
         )
-        print(file_test)
         crawler = TCrawler(url, rules)
         FakeResponse.status = 200
         FakeResponse.content_type = "application/zip"
         FakeResponse.file_path = file_test
         assert len(await crawler.get_result()) == 1
 
-    async def test_worker_download_text(self: "TestCrawler", file_page: str):
+    async def test_worker_download_text_file(
+        self: "TestCrawler", file_page: str
+    ):
         rules = [["tbody", "a", {"href", "title"}]]
         url = "https://github.com/VIVERA83/crawler/master.html"
-        print(file_page)
         crawler = TCrawler(url, rules)
         FakeResponse.status = 200
         FakeResponse.content_type = "text/plain"

@@ -14,12 +14,12 @@ url = "https://gitea.radium.group/" "radium/project-configuration/"
 
 async def main() -> list[str]:
     """Функция запуска приложения"""
+    crawler = Crawler(url=url, rules=rules, count_worker=3)
+    return await crawler.get_result()
+
+
+if __name__ == "__main__":  # pragma: no cover
     try:
-        crawler = Crawler(url=url, rules=rules, count_worker=3)
-        return await crawler.get_result()
+        print(*asyncio.run(main()), sep="\n")
     except KeyboardInterrupt:
         logging.warning(" KeyboardInterrupt")
-
-
-if __name__ == "__main__":
-    print(*asyncio.run(main()), sep="\n")
