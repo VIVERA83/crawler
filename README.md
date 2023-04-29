@@ -127,3 +127,13 @@ Crawler(...).get_result() - после вызова данного метода,
 
 исполняемый файл находится в app/main.py
 ---
+### Примеры для использования
+1. Скачать все открытые репозитории пользователя __vivera83__
+```
+rules = [
+    ["turbo-frame", "a", {"href", "itemprop"}],
+    ["li", "a",
+     {"class","href", "rel", "data-hydro-click", "data-hydro-click-hmac", "data-ga-click", "data-open-app", "data-turbo"}],
+]
+URL = "https://github.com/VIVERA83?tab=repositories"
+```
