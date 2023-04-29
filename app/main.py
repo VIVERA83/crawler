@@ -6,10 +6,10 @@ from app.core.crawler import Crawler
 
 logging.basicConfig(level=logging.INFO)
 rules = [
-    ["tbody", "a", {"href", "title"}],
+    ["tbody", "a", {"href", "title", "class"}],
     ["div", "a", {"download", "href"}],
 ]
-url = "https://gitea.radium.group/" "radium/project-configuration/"
+url = "https://gitea.radium.group/radium/project-configuration/"
 
 
 async def main() -> list[str]:
